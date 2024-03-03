@@ -24,17 +24,12 @@ async fn create_content(event: Request) -> Result<Response<Body>, Error> {
     let data = std::str::from_utf8(event.body()).expect("non utf-8");
     let payload: Value = serde_json::from_str(data)?;
 
-    let content = Content::new(
-        payload.get("name").unwrap().as_str().unwrap().to_string(),
-        payload
-            .get("description")
-            .unwrap()
-            .as_str()
-            .unwrap()
-            .to_string(),
-        payload.get("image").unwrap().as_str().unwrap().to_string(),
-    );
-    let body = json!(content);
+    let body = match Content::from(payload) {
+        Ok(payload) => json!(payload),
+        Err(e) => {
+            return HttpError::new(HttpErrorType::BadRequest, e.to_string()).to_response();
+        }
+    };
 
     // Return something that implements IntoResponse.
     // It will be serialized to the right response event automatically by the runtime
