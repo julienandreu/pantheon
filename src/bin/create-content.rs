@@ -1,8 +1,6 @@
-use lambda_http::{
-    http::Method, run, service_fn, tracing, Body, Error, Request, RequestExt, Response,
-};
+use lambda_http::{http::Method, run, service_fn, tracing, Body, Error, Request, Response};
 use pantheon::entity::{Content, HttpError, HttpErrorType};
-use serde_json::json;
+use serde_json::{json, Value};
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
@@ -23,16 +21,18 @@ async fn create_content(event: Request) -> Result<Response<Body>, Error> {
         }
     }
 
-    let payload = event.body();
+    let data = std::str::from_utf8(event.body()).expect("non utf-8");
+    let payload: Value = serde_json::from_str(data)?;
 
-    let who = event
-        .query_string_parameters_ref()
-        .and_then(|params| params.first("name"))
-        .unwrap_or("world");
     let content = Content::new(
-        String::from(who),
-        json!(payload).to_string(),
-        String::from("text/plain"),
+        payload.get("name").unwrap().as_str().unwrap().to_string(),
+        payload
+            .get("description")
+            .unwrap()
+            .as_str()
+            .unwrap()
+            .to_string(),
+        payload.get("image").unwrap().as_str().unwrap().to_string(),
     );
     let body = json!(content);
 
