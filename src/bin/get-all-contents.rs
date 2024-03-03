@@ -11,14 +11,17 @@ async fn main() -> Result<(), Error> {
 
 async fn get_all_contents(event: Request) -> Result<Response<Body>, Error> {
     // Extract some useful information from the request
+    let verb = event.method();
+    let payload = event.body();
+
     let who = event
         .query_string_parameters_ref()
         .and_then(|params| params.first("name"))
         .unwrap_or("world");
     let content = Content::new(
         String::from(who),
-        String::from("description"),
-        String::from("image"),
+        json!(payload).to_string(),
+        String::from(verb.as_str()),
     );
     let body = json!(content);
 
