@@ -2,6 +2,7 @@
 name = "pantheon"
 version = "0.1.0"
 edition = "2021"
+license = "MIT"
 
 [package.metadata.lambda.env]
 RUST_LOG = "debug"
@@ -23,7 +24,12 @@ lambda_http = "0.10.0"
 tokio = { version = "1", features = ["macros"] }
 serde_json = "1.0"
 serde = "1.0.197"
+testcontainers = "0.15.0"
 
 [[bin]]
 name = "get-all-contents"
 path = "src/bin/get-all-contents.rs"
+
+[[bin]]
+name = "local"
+path = "src/local.rs"
