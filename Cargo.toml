@@ -22,6 +22,7 @@ DYNAMODB_URI = "dynamodb"
 lambda_http = "0.10.0"
 tokio = { version = "1", features = ["macros"] }
 serde_json = "1.0"
+serde = "1.0.197"
 
 [[bin]]
 name = "get-all-contents"

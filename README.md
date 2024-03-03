@@ -19,3 +19,5 @@ cargo update
 ```bash
 cargo lambda watch
 ```
+
+Server would run on `http://127.0.0.1:9000` and you can access your function at `http://localhost:9000/lambda-url/get-all-contents`

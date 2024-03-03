@@ -1,4 +1,5 @@
 use lambda_http::{run, service_fn, tracing, Body, Error, Request, RequestExt, Response};
+use pantheon::entities::Content;
 use serde_json::json;
 
 #[tokio::main]
@@ -14,12 +15,12 @@ async fn get_all_contents(event: Request) -> Result<Response<Body>, Error> {
         .query_string_parameters_ref()
         .and_then(|params| params.first("name"))
         .unwrap_or("world");
-    let body = json!(
-      {
-        "message": format!("Hello {who}, this is an AWS Lambda HTTP request", who=who),
-        "name": who.to_string(),
-      }
+    let content = Content::new(
+        String::from(who),
+        String::from("description"),
+        String::from("image"),
     );
+    let body = json!(content);
 
     // Return something that implements IntoResponse.
     // It will be serialized to the right response event automatically by the runtime
