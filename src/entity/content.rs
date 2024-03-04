@@ -1,5 +1,6 @@
+use lambda_http::{Body, Error, Response};
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
+use serde_json::{json, Error as JsonError, Value};
 
 #[derive(Serialize, Deserialize)]
 pub struct Content {
@@ -17,7 +18,22 @@ impl Content {
         }
     }
 
-    pub fn from(value: Value) -> Result<Self, String> {
-        serde_json::from_value(value).map_err(|e| e.to_string())
+    pub fn from(value: Value) -> Result<Self, JsonError> {
+        serde_json::from_value(value)
+    }
+
+    pub fn to_response(&self, status: u16) -> Result<Response<Body>, Error> {
+        Ok(Response::builder()
+            .status(status)
+            .header("content-type", "application/json")
+            .body(
+                json!({
+                  "statusCode": status,
+                  "body": self,
+                })
+                .to_string()
+                .into(),
+            )
+            .map_err(Box::new)?)
     }
 }
