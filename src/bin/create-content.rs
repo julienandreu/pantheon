@@ -12,7 +12,17 @@ async fn create_content(event: Request) -> Result<Response<Body>, Error> {
     let method = event.method().clone();
 
     match method {
-        Method::POST => (),
+        Method::POST => {
+            let body = String::from_utf8(event.body().to_vec())?;
+            let payload = serde_json::from_str(&body)?;
+
+            match Content::from(payload) {
+                Ok(content) => content.to_response(201),
+                Err(e) => {
+                    return HttpError::new(HttpErrorType::BadRequest, e.to_string()).to_response();
+                }
+            }
+        }
         _ => {
             return HttpError::new(
                 HttpErrorType::NotAllowed,
@@ -21,16 +31,4 @@ async fn create_content(event: Request) -> Result<Response<Body>, Error> {
             .to_response();
         }
     }
-
-    let body = String::from_utf8(event.body().to_vec())?;
-    let payload = serde_json::from_str(body.as_str())?;
-
-    let content = match Content::from(payload) {
-        Ok(content) => content,
-        Err(e) => {
-            return HttpError::new(HttpErrorType::BadRequest, e.to_string()).to_response();
-        }
-    };
-
-    return content.to_response(201);
 }

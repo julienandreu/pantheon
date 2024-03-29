@@ -38,22 +38,22 @@ impl HttpError {
             HttpErrorType::InternalServerError => 500,
         };
 
+        let response_body = json!({
+          "statusCode": status,
+          "body": {
+            "error": {
+              "code": self.code.to_string(),
+              "message": self.message,
+            },
+          },
+        })
+        .to_string()
+        .into();
+
         Ok(Response::builder()
             .status(status)
             .header("content-type", "application/json")
-            .body(
-                json!({
-                  "statusCode": status,
-                  "body": {
-                    "error": {
-                      "code": self.code.to_string(),
-                      "message": self.message,
-                    },
-                  },
-                })
-                .to_string()
-                .into(),
-            )
+            .body(response_body)
             .map_err(Box::new)?)
     }
 }

@@ -10,27 +10,23 @@ async fn main() -> Result<(), Error> {
 }
 
 async fn get_all_contents(event: Request) -> Result<Response<Body>, Error> {
-    // Extract some useful information from the request
-    let verb = event.method();
+    let verb = event.method().as_str();
     let payload = event.body();
 
     let who = event
-        .query_string_parameters_ref()
-        .and_then(|params| params.first("name"))
-        .unwrap_or("world");
-    let content = Content::new(
-        String::from(who),
-        json!(payload).to_string(),
-        String::from(verb.as_str()),
-    );
+        .query_string_parameters()
+        .first("name")
+        .map_or("world".to_string(), |name| name.to_string());
+
+    let description = std::str::from_utf8(payload).expect("");
+
+    let content = Content::new(who.to_string(), description.to_string(), verb.to_string());
+
     let body = json!(content);
 
-    // Return something that implements IntoResponse.
-    // It will be serialized to the right response event automatically by the runtime
-    let resp = Response::builder()
+    Ok(Response::builder()
         .status(200)
         .header("content-type", "application/json")
         .body(body.to_string().into())
-        .map_err(Box::new)?;
-    Ok(resp)
+        .map_err(Box::new)?)
 }

@@ -23,17 +23,17 @@ impl Content {
     }
 
     pub fn to_response(&self, status: u16) -> Result<Response<Body>, Error> {
+        let response_body = json!({
+            "statusCode": status,
+            "body": self,
+        })
+        .to_string()
+        .into();
+
         Ok(Response::builder()
             .status(status)
             .header("content-type", "application/json")
-            .body(
-                json!({
-                  "statusCode": status,
-                  "body": self,
-                })
-                .to_string()
-                .into(),
-            )
+            .body(response_body)
             .map_err(Box::new)?)
     }
 }
