@@ -1,7 +1,7 @@
 use lambda_http::{Body, Error as LambdaHttpError, Response};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use std::convert::TryFrom;
+use std::convert::{TryFrom, TryInto};
 use std::error::Error;
 use std::fmt;
 
@@ -62,21 +62,6 @@ impl Content {
             image,
         }
     }
-
-    pub fn to_response(&self, status: u16) -> Result<Response<Body>, LambdaHttpError> {
-        let response_body = json!({
-            "statusCode": status,
-            "body": self,
-        })
-        .to_string()
-        .into();
-
-        Ok(Response::builder()
-            .status(status)
-            .header("content-type", "application/json")
-            .body(response_body)
-            .map_err(Box::new)?)
-    }
 }
 
 impl TryFrom<String> for Content {
@@ -89,5 +74,24 @@ impl TryFrom<String> for Content {
                 error.to_string(),
             ))),
         }
+    }
+}
+
+impl TryInto<Response<Body>> for Content {
+    type Error = LambdaHttpError;
+
+    fn try_into(self) -> Result<Response<Body>, Self::Error> {
+        let response_body = json!({
+            "statusCode": 200,
+            "body": self,
+        })
+        .to_string()
+        .into();
+
+        Ok(Response::builder()
+            .status(200)
+            .header("content-type", "application/json")
+            .body(response_body)
+            .map_err(Box::new)?)
     }
 }

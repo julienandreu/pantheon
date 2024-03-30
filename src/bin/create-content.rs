@@ -14,7 +14,7 @@ async fn create_content(event: Request) -> Result<Response<Body>, Error> {
 
     match method {
         Method::POST => match Content::try_from(body) {
-            Ok(content) => content.to_response(201),
+            Ok(content) => content.try_into(),
             Err(e) => HttpError::new(HttpErrorType::BadRequest, e.to_string()).to_response(),
         },
         _ => HttpError::new(
