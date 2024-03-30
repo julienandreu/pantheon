@@ -1,6 +1,51 @@
-use lambda_http::{Body, Error, Response};
+use lambda_http::{Body, Error as LambdaHttpError, Response};
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Error as JsonError, Value};
+use serde_json::json;
+use std::convert::TryFrom;
+use std::error::Error;
+use std::fmt;
+
+#[derive(Clone, Debug)]
+pub enum ContentErrorType {
+    BadRequest(String),
+}
+
+impl fmt::Display for ContentErrorType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            ContentErrorType::BadRequest(source) => {
+                write!(f, "Invalid content: {}", source)
+            }
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct ContentError {
+    error: ContentErrorType,
+    description: String,
+}
+
+impl ContentError {
+    fn new(error: ContentErrorType) -> Self {
+        ContentError {
+            description: error.to_string(),
+            error,
+        }
+    }
+}
+
+impl fmt::Display for ContentError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.error)
+    }
+}
+
+impl Error for ContentError {
+    fn description(&self) -> &str {
+        &self.description
+    }
+}
 
 #[derive(Serialize, Deserialize)]
 pub struct Content {
@@ -18,11 +63,7 @@ impl Content {
         }
     }
 
-    pub fn from(value: Value) -> Result<Self, JsonError> {
-        serde_json::from_value(value)
-    }
-
-    pub fn to_response(&self, status: u16) -> Result<Response<Body>, Error> {
+    pub fn to_response(&self, status: u16) -> Result<Response<Body>, LambdaHttpError> {
         let response_body = json!({
             "statusCode": status,
             "body": self,
@@ -35,5 +76,18 @@ impl Content {
             .header("content-type", "application/json")
             .body(response_body)
             .map_err(Box::new)?)
+    }
+}
+
+impl TryFrom<String> for Content {
+    type Error = ContentError;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        match serde_json::from_str(&value) {
+            Ok(content) => Ok(content),
+            Err(error) => Err(ContentError::new(ContentErrorType::BadRequest(
+                error.to_string(),
+            ))),
+        }
     }
 }

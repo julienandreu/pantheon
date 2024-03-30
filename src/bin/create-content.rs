@@ -9,26 +9,18 @@ async fn main() -> Result<(), Error> {
 }
 
 async fn create_content(event: Request) -> Result<Response<Body>, Error> {
-    let method = event.method().clone();
+    let method = event.method().to_owned();
+    let body = String::from_utf8(event.body().to_vec())?;
 
     match method {
-        Method::POST => {
-            let body = String::from_utf8(event.body().to_vec())?;
-            let payload = serde_json::from_str(&body)?;
-
-            match Content::from(payload) {
-                Ok(content) => content.to_response(201),
-                Err(e) => {
-                    return HttpError::new(HttpErrorType::BadRequest, e.to_string()).to_response();
-                }
-            }
-        }
-        _ => {
-            return HttpError::new(
-                HttpErrorType::NotAllowed,
-                String::from(format!("HTTP {} Method not allowed", method,)),
-            )
-            .to_response();
-        }
+        Method::POST => match Content::try_from(body) {
+            Ok(content) => content.to_response(201),
+            Err(e) => HttpError::new(HttpErrorType::BadRequest, e.to_string()).to_response(),
+        },
+        _ => HttpError::new(
+            HttpErrorType::NotAllowed,
+            format!("HTTP {} Method not allowed", method),
+        )
+        .to_response(),
     }
 }

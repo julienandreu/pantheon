@@ -31,5 +31,5 @@ name = "get-all-contents"
 path = "src/bin/get-all-contents.rs"
 
 [[bin]]
-name = "local"
-path = "src/local.rs"
+name = "create-content"
+path = "src/bin/create-content.rs"
